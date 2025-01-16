@@ -89,6 +89,45 @@ export const generateRefreshToken = (id: string, role: string): string => {
     }
 };
 
+
+
+export const addOrUpdateAlert = async (userId: string, symbol: string, threshold: number) => {
+    const user = await userSchema.findById(userId);
+    if (!user) throw new Error("User  not found");
+
+    // Ensure alertPreferences is defined
+    if (!user.alertPreferences) {
+        user.alertPreferences = {
+            enableAlerts: true, // Default value, adjust as necessary
+            priceThresholds: [] // Initialize as an empty array
+        };
+    }
+
+    // Check if alerts are enabled
+    if (!user.alertPreferences.enableAlerts) {
+        throw new Error("Alerts are disabled for this user");
+    }
+
+    // Ensure priceThresholds is defined
+    if (!user.alertPreferences.priceThresholds) {
+        user.alertPreferences.priceThresholds = []; // Initialize as an empty array
+    }
+
+    const existingAlert = user.alertPreferences.priceThresholds.find((alert) => alert.symbol === symbol);
+
+    if (existingAlert) {
+        // Update the existing threshold
+        existingAlert.threshold = threshold;
+    } else {
+        // Add a new threshold
+        user.alertPreferences.priceThresholds.push({ symbol, threshold });
+    }
+
+    await user.save();
+    return user.alertPreferences.priceThresholds;
+};
+
+
 // export const updateUser = async (id: string, data: IUser) => {
 //     const result = await UserSchema.findOneAndUpdate({ _id: id }, data, {
 //         new: true,

@@ -9,7 +9,7 @@ import { loadConfig } from "./app/common/helper/config.hepler";
 import { type IUser } from "./app/user/user.dto";
 import errorHandler from "./app/common/middleware/error-handler.middleware";
 import routes from "./app/routes";
-
+import "./app/user/background-job/background-job"
 loadConfig();
 
 declare global {

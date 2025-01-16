@@ -57,6 +57,19 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id; // Assume user is authenticated
+    if (!userId) throw new Error("User not authenticated");
+
+    const { symbol, threshold } = req.body;
+    if (!symbol || typeof threshold !== "number") {
+        throw new Error("Symbol and threshold are required");
+    }
+
+    const alerts = await userService.addOrUpdateAlert(userId, symbol, threshold);
+    res.status(200).send(createResponse(alerts, "Alert added/updated successfully"));
+});
+
 // export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 //     const result = await userService.updateUser(req.params.id, req.body);
 //     res.send(createResponse(result, "User updated sucssefully"))

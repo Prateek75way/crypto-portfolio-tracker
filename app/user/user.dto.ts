@@ -21,5 +21,10 @@ export interface IUser extends BaseSchema {
             symbol: string; // Cryptocurrency symbol
             threshold: number; // Price threshold for alerts
         }>;
+        triggeredAlerts?: Array<{
+            symbol: string; // Cryptocurrency symbol
+            threshold: number; // Triggered threshold value
+            triggeredAt: string; // ISO timestamp for when the alert was triggered
+        }>;
     };
 }
