@@ -1,4 +1,3 @@
-
 import mongoose from "mongoose";
 import { type IUser } from "./user.dto";
 import bcrypt from 'bcrypt';
@@ -17,14 +16,32 @@ const UserSchema = new Schema<IUser>({
         role: { type: String, required: true, enum: ["USER", "ADMIN"], default: "USER" },
         password: { type: String, required: true },
         refreshToken: { type: String, required: false },
-}, { timestamps: true });
-
-UserSchema.pre("save", async function (next) {
+        portfolio: [
+            {
+                symbol: { type: String, required: true },
+                amount: { type: Number, required: true },
+            },
+        ],
+        defaultCurrency: { type: String, default: "usd" },
+        transactionCount: { type: Number, default: 0 },
+        alertPreferences: {
+            enableAlerts: { type: Boolean, default: true },
+            priceThresholds: [
+                {
+                    symbol: { type: String, required: true },
+                    threshold: { type: Number, required: true },
+                },
+            ],
+        },
+    }, { timestamps: true });
+    
+    UserSchema.pre("save", async function (next) {
         if (!this.isModified("password")) {
             return next();
         }
         this.password = await hashPassword(this.password);
         next();
     });
-
-export default mongoose.model<IUser>("user", UserSchema);
+    
+    export default mongoose.model<IUser>("user", UserSchema);
+    

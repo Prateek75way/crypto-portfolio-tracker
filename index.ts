@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response } from "express";
 import bodyParser from "body-parser";
 import morgan from "morgan";
 import http from "http";
-
+import cookieParser from "cookie-parser";
 import { initDB } from "./app/common/services/database.service";
 import { initPassport } from "./app/common/services/passport-jwt.service";
 import { loadConfig } from "./app/common/helper/config.hepler";
@@ -20,7 +20,7 @@ declare global {
     }
   }
 }
-
+ 
 const port = 5000;
 
 const app: Express = express();
@@ -30,6 +30,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(morgan("dev"));
+app.use(cookieParser())
 
 const initApp = async (): Promise<void> => {
   // init mongodb
