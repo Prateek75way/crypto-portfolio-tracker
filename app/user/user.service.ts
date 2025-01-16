@@ -56,6 +56,39 @@ export const generateRefreshToken = (id: string, role: string): string => {
     return jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET as string, { expiresIn: "7d" });
   };
 
+  export const refreshTokens = async (refreshToken: string) => {
+    if (!refreshToken) {
+        throw new Error("Refresh token is required");
+    }
+
+    try {
+        // Verify the refresh token
+        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string) as {
+            id: string;
+        };
+
+        // Find the user by ID and verify the refresh token
+        const user = await userSchema.findOne({ _id: decoded.id, refreshToken });
+        if (!user) {
+            throw new Error("Invalid or expired refresh token");
+        }
+
+        // Generate new tokens
+        const newAccessToken = generateAccessToken(user._id, user.role);
+        const newRefreshToken = generateRefreshToken(user._id, user.role);
+
+        // Update the refresh token in the database (rotate token)
+        user.refreshToken = newRefreshToken;
+        await user.save();
+
+        // Return the new tokens
+        return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    } catch (error: any) {
+        console.error("Error refreshing tokens:", error);
+        throw new Error("Invalid or expired refresh token");
+    }
+};
+
 // export const updateUser = async (id: string, data: IUser) => {
 //     const result = await UserSchema.findOneAndUpdate({ _id: id }, data, {
 //         new: true,

@@ -9,6 +9,7 @@ const router = Router();
 router
         .post("/", userValidator.createUser, catchError, userController.createUser)
         .post("/login", userValidator.loginUser, catchError, userController.loginUser)
+        .post("/refresh", userValidator.refreshToken, catchError, userController.refresh)
         // .get("/", userController.getAllUser)
         // .get("/:id", userController.getUserById)
         // .delete("/:id", userController.deleteUser)
