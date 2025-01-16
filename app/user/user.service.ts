@@ -3,6 +3,7 @@ import { type IUser } from "./user.dto";
 import userSchema from "./user.schema";
 import UserSchema from "./user.schema";
 import jwt from "jsonwebtoken";
+import axios from "axios";
 import bcrypt from "bcrypt";
 export const createUser = async (data: IUser) => {
     try {
@@ -127,6 +128,51 @@ export const addOrUpdateAlert = async (userId: string, symbol: string, threshold
     return user.alertPreferences.priceThresholds;
 };
 
+export const getUserPortfolio = async (userId: string) => {
+    const user = await userSchema.findById(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    // If the user has no portfolio
+    if (!user.portfolio || user.portfolio.length === 0) {
+        return { portfolio: [], message: "No cryptocurrencies in your portfolio." };
+    }
+
+    const portfolioDetails = await Promise.all(
+        user.portfolio.map(async (crypto: any) => {
+            try {
+                // Fetch current price using an API (e.g., CoinGecko)
+                const { data } = await axios.get(`https://api.coingecko.com/api/v3/simple/price`, {
+                    params: {
+                        ids: crypto.symbol,
+                        vs_currencies: user.defaultCurrency || "usd",
+                    },
+                });
+
+                const currentPrice = data[crypto.symbol]?.[user.defaultCurrency || "usd"] || 0;
+
+                return {
+                    symbol: crypto.symbol,
+                    amount: crypto.amount,
+                    currentPrice,
+                    totalValue: crypto.amount * currentPrice,
+                };
+            } catch (error: any) {
+                console.error(`Failed to fetch price for ${crypto.symbol}:`, error.message);
+                return {
+                    symbol: crypto.symbol,
+                    amount: crypto.amount,
+                    currentPrice: 0,
+                    totalValue: 0,
+                    error: "Price fetch failed",
+                };
+            }
+        })
+    );
+
+    return { portfolio: portfolioDetails };
+};
 
 // export const updateUser = async (id: string, data: IUser) => {
 //     const result = await UserSchema.findOneAndUpdate({ _id: id }, data, {

@@ -70,6 +70,21 @@ export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response)
     res.status(200).send(createResponse(alerts, "Alert added/updated successfully"));
 });
 
+export const getPortfolio = async (req: Request, res: Response) => {
+    try {
+        const userId = req.user?._id;
+        if (!userId) {
+            throw new Error("User not authenticated");
+        }
+
+        const portfolio = await userService.getUserPortfolio(userId);
+        return res.status(200).send(createResponse(portfolio, "Fetched portfolio successfully"));
+    } catch (error: any) {
+        console.error("Error fetching portfolio:", error.message);
+        throw new Error("Failed to fetch portfolio");
+    }
+};
+
 // export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 //     const result = await userService.updateUser(req.params.id, req.body);
 //     res.send(createResponse(result, "User updated sucssefully"))

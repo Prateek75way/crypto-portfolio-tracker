@@ -11,7 +11,8 @@ router
         .post("/", userValidator.createUser, catchError, userController.createUser)
         .post("/login", userValidator.loginUser, catchError, userController.loginUser)
         .post("/refresh", userValidator.refreshToken, catchError, userController.refresh)
-        .post("/alerts", authenticateUser, userController.addOrUpdateAlert);
+        .post("/alerts", authenticateUser, userController.addOrUpdateAlert)
+        .get("/portfolio", authenticateUser, userController.getPortfolio);
         // .get("/", userController.getAllUser)
         // .get("/:id", userController.getUserById)
         // .delete("/:id", userController.deleteUser)
