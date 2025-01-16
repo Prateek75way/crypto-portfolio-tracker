@@ -87,43 +87,5 @@ pnpm run format
 pnpm run lint:fix
 ```
 
-## Folder Structure
 
-```plaintext
-crypto-portfolio-tracker/
-│
-├── src/                         # Source code
-│   ├── api/                     # API route handlers (Controllers)
-│   │   ├── crypto.controller.ts  # Controller for crypto-related actions
-│   │   ├── portfolio.controller.ts  # Controller for portfolio actions
-│   │   └── transaction.controller.ts # Controller for transaction-related actions
-│   │
-│   ├── crypto/                   # Crypto-specific logic
-│   │   ├── crypto.service.ts      # Service for handling crypto-related operations
-│   │   └── crypto.schema.ts       # MongoDB schema for transactions and portfolio
-│   │
-│   ├── user/                     # User authentication and management
-│   │   ├── user.schema.ts         # MongoDB schema for user data
-│   │   ├── user.controller.ts     # Controller for user-related actions
-│   │   └── user.service.ts        # User-related services
-│   │
-│   ├── common/                   # Shared logic and utilities
-│   │   ├── helper/                # Utility helpers (e.g., email sending, responses)
-│   │   │   ├── send-mail.helper.ts
-│   │   │   └── response.helper.ts
-│   │   ├── middleware/            # Middleware functions (e.g., authentication)
-│   │   └── config.ts              # Configuration files (e.g., environment setup)
-│   │
-│   ├── index.ts                  # Entry point for the app
-│   ├── app.ts                    # Express app configuration
-│   └── server.ts                 # Server setup and startup
-│
-├── dist/                         # Compiled JavaScript files (generated after build)
-│
-├── .env                          # Environment variables
-├── .gitignore                    # Git ignore file
-├── package.json                  # NPM dependencies and scripts
-├── README.md                     # Project documentation
-└── tsconfig.json                 # TypeScript configuration
-```
 
