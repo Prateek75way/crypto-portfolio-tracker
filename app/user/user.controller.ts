@@ -7,15 +7,61 @@ import bcrypt from "bcrypt";
 import userSchema from "./user.schema";
 // Assuming a utility for formatting responses
 
-export const createUser = asyncHandler(async (req: Request, res: Response) => {
 
+
+/**
+ * Handles POST /users request
+ * Creates a new user based on the request body and returns it in response
+ * @param req Request object
+ * @param res Response object
+ * @returns Response with either user or error message
+ */
+export const createUser = asyncHandler(async (req: Request, res: Response) => {
+    
         const result = await userService.createUser(req.body);
         res.status(201).send(createResponse(result, "User created successfully"));
      
         
-    
 });
 
+  
+/**
+ * @route GET /users
+ * @description Fetch all users from the database
+ * @access Private (Requires admin role)
+ * @returns {Object} 200 - Success response with a list of users
+ * @returns {Object} 404 - Error response when no users are found
+ * @returns {Object} 500 - Internal server error response
+ */
+export const getAllUsers = async (req: Request, res: Response) => {
+    try {
+      const result = await userService.getAllUsers();
+  
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(404).json(result);
+      }
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: "An error occurred while fetching users",
+        error: error.message,
+      });
+    }
+};
+
+
+/**
+ * @route POST /login
+ * @description Login a user and return an access token in an HTTP-only cookie
+ * @body {Object} email - The user's email address
+ * @body {Object} password - The user's password
+ * @access Public
+ * @returns {Object} 200 - Success response with a login message and user data
+ * @returns {Object} 400 - Error response for invalid credentials or missing fields
+ * @returns {Object} 500 - Internal server error response
+ */
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
@@ -33,6 +79,15 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
     
 });
 
+/**
+ * @route POST /refresh
+ * @description Refresh the access token using a refresh token
+ * @body {Object} refreshToken - The user's current refresh token
+ * @access Public
+ * @returns {Object} 200 - Success response with new access and refresh tokens
+ * @returns {Object} 400 - Error response if refresh token is invalid
+ * @returns {Object} 500 - Internal server error response
+ */
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
 
@@ -57,6 +112,16 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 
+/**
+ * @route POST /alerts
+ * @description Add or update an alert for a specific symbol and threshold
+ * @body {Object} symbol - The symbol for which to set the alert (e.g., "bitcoin")
+ * @body {Object} threshold - The price threshold at which the alert should trigger
+ * @access Private
+ * @returns {Object} 200 - Success response with alert details
+ * @returns {Object} 400 - Error response if symbol or threshold are invalid
+ * @returns {Object} 500 - Internal server error response
+ */
 export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?._id; // Assume user is authenticated
     if (!userId) throw new Error("User not authenticated");
@@ -70,6 +135,14 @@ export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response)
     res.status(200).send(createResponse(alerts, "Alert added/updated successfully"));
 });
 
+/**
+ * @route GET /portfolio
+ * @description Fetch the user's portfolio
+ * @access Private
+ * @returns {Object} 200 - Success response with portfolio data
+ * @returns {Object} 401 - Error response if user is not authenticated
+ * @returns {Object} 500 - Internal server error response
+ */
 export const getPortfolio = async (req: Request, res: Response) => {
     try {
         const userId = req.user?._id;
@@ -84,6 +157,39 @@ export const getPortfolio = async (req: Request, res: Response) => {
         throw new Error("Failed to fetch portfolio");
     }
 };
+
+/**
+ * @route POST /logout
+ * @description Log the user out by clearing the access token cookie and updating the refresh token in the database
+ * @access Private
+ * @returns {Object} 200 - Success response indicating successful logout
+ * @returns {Object} 500 - Internal server error response
+ */
+export const logoutController = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id;  // Assuming user is attached to the request after authentication
+
+    if (!userId) {
+        throw new Error("User not authenticated");
+    }
+
+    try {
+        // Clear the accessToken cookie
+        res.clearCookie("AccessToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production", // Set secure for production environments
+            sameSite: "strict",
+        });
+
+        // Call service to update the refresh token in the database
+        await userService.clearRefreshToken(userId);
+
+        // Send a success response
+        res.status(200).json({ success: true, message: "Logged out successfully" });
+    } catch (error: any) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 
 // export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 //     const result = await userService.updateUser(req.params.id, req.body);

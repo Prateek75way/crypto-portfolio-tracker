@@ -3,6 +3,12 @@ import axios from "axios";
 import User from "../user.schema";
 import { sendEmail } from "../../common/helper/send-mail.helper";
 
+/**
+ * @description Checks if any of the users' price thresholds have been reached.
+ * This function fetches all users with alerts enabled and checks their price thresholds.
+ * If the threshold is crossed, it triggers a notification for the user.
+ * The function runs every 10 minutes as per the cron schedule.
+ */
 const checkPriceThresholds = async () => {
     console.log("Checking price thresholds...");
 
@@ -50,9 +56,16 @@ const checkPriceThresholds = async () => {
     }
 };
 
-// Schedule the task to run every 2 minutes
-cron.schedule("*/10 * * * *", checkPriceThresholds);
+// Schedule the task to run every 10 minutes
+cron.schedule("*/10 * * * *", checkPriceThresholds); 
 
+/**
+ * @description Sends a notification to the user via email when a price alert is triggered.
+ * @param {Object} user - The user who is to be notified
+ * @param {string} symbol - The cryptocurrency symbol (e.g., "bitcoin")
+ * @param {number} price - The current price of the cryptocurrency
+ * @returns {Promise<void>} - Sends an email notification to the user
+ */
 const sendNotification = async (user: any, symbol: string, price: number) => {
     await sendEmail({
         to: user.email,

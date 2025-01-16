@@ -18,8 +18,33 @@ export const createUser = async (data: IUser) => {
     }
 };
 
+/**
+ * @description Fetch all users from the database
+ * @returns {Object} - Returns success and data if users are found, or an error message if no users are found
+ */
+export const getAllUsers = async () => {
+    try {
+      // Fetch all users from the database
+      const users = await userSchema.find();
+  
+      // If no users found, return a message
+      if (users.length === 0) {
+        return { success: false, message: "No users found" };
+      }
+  
+      return { success: true, data: users };
+    } catch (error: any) {
+      throw new Error("Failed to retrieve users: " + error.message);
+    }
+  };
 
-
+/**
+ * @description Logs in a user by verifying email and password, and returns access and refresh tokens
+ * @param {string} email - The email of the user
+ * @param {string} password - The password of the user
+ * @returns {Object} - Returns access token and refresh token
+ * @throws {Error} - Throws error if the email/password is invalid or user is not found
+ */
 export const loginUser = async (email: string, password: string) => {
     if (!email || !password) {
         throw new Error("Email and password are required");
@@ -49,15 +74,33 @@ export const loginUser = async (email: string, password: string) => {
     return { accessToken, refreshToken };
 };
 
+/**
+ * @description Generates an access token with user ID and role
+ * @param {string} id - The ID of the user
+ * @param {string} role - The role of the user
+ * @returns {string} - Returns the generated access token
+ */
 export const generateAccessToken = (id: string, role: string): string => {
     return jwt.sign({ id, role }, process.env.JWT_SECRET as string, { expiresIn: "15m" });
 }
 
+/**
+ * @description Generates a refresh token with user ID and role
+ * @param {string} id - The ID of the user
+ * @param {string} role - The role of the user
+ * @returns {string} - Returns the generated refresh token
+ */
 export const generateRefreshToken = (id: string, role: string): string => {
     return jwt.sign({ id, role }, process.env.JWT_REFRESH_SECRET as string, { expiresIn: "7d" });
-  };
+};
 
-  export const refreshTokens = async (refreshToken: string) => {
+/**
+ * @description Refreshes the access and refresh tokens using a valid refresh token
+ * @param {string} refreshToken - The refresh token to verify and use for generating new tokens
+ * @returns {Object} - Returns new access and refresh tokens
+ * @throws {Error} - Throws error if the refresh token is invalid or expired
+ */
+export const refreshTokens = async (refreshToken: string) => {
     if (!refreshToken) {
         throw new Error("Refresh token is required");
     }
@@ -90,8 +133,14 @@ export const generateRefreshToken = (id: string, role: string): string => {
     }
 };
 
-
-
+/**
+ * @description Adds or updates an alert for a user's cryptocurrency portfolio
+ * @param {string} userId - The ID of the user
+ * @param {string} symbol - The symbol of the cryptocurrency (e.g., "bitcoin")
+ * @param {number} threshold - The price threshold at which the alert should be triggered
+ * @returns {Array} - Returns the updated list of price thresholds
+ * @throws {Error} - Throws error if the user is not found or alerts are disabled
+ */
 export const addOrUpdateAlert = async (userId: string, symbol: string, threshold: number) => {
     const user = await userSchema.findById(userId);
     if (!user) throw new Error("User  not found");
@@ -128,6 +177,12 @@ export const addOrUpdateAlert = async (userId: string, symbol: string, threshold
     return user.alertPreferences.priceThresholds;
 };
 
+/**
+ * @description Retrieves the user's cryptocurrency portfolio with current prices
+ * @param {string} userId - The ID of the user
+ * @returns {Object} - Returns the user's portfolio with details and current prices
+ * @throws {Error} - Throws error if the user is not found
+ */
 export const getUserPortfolio = async (userId: string) => {
     const user = await userSchema.findById(userId);
     if (!user) {
@@ -173,6 +228,30 @@ export const getUserPortfolio = async (userId: string) => {
 
     return { portfolio: portfolioDetails };
 };
+
+/**
+ * @description Clears the refresh token in the database for a given user
+ * @param {string} userId - The ID of the user
+ * @returns {void} - Updates the user record to clear the refresh token
+ * @throws {Error} - Throws error if the user is not found
+ */
+export const clearRefreshToken = async (userId: string) => {
+    try {
+        // Find the user by ID
+        const user = await userSchema.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+
+        // Set the refresh token to an empty string
+        user.refreshToken = "";
+        await user.save();  // Save the updated user object
+
+    } catch (error: any) {
+        throw new Error(`Error clearing refresh token: ${error.message}`);
+    }
+};
+
 
 // export const updateUser = async (id: string, data: IUser) => {
 //     const result = await UserSchema.findOneAndUpdate({ _id: id }, data, {

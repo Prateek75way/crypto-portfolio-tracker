@@ -6,11 +6,12 @@ import { authenticateUser } from "../../common/middleware/authenticate.middlewar
 const router = express.Router();
 
 // Portfolio Management
-router.post("/portfolio", authenticateUser, portfolioController.addCryptoToPortfolio);
-router.delete("/", authenticateUser, portfolioController.deleteCryptoFromPortfolio);
+
+router.delete("/", authenticateUser, portfolioController.deleteCryptoFromPortfolio); 
 
 
 // Tax Reporting
 router.get("/tax-report", authenticateUser, portfolioController.getTaxReport);
 
 export default router;
+  

@@ -57,20 +57,34 @@ export const removeCrypto = async (userId: string, symbol: string) => {
     return { message: `${symbol} removed from portfolio` };
 };
 
-/**
- * Calculate portfolio performance.
- * @param userId - User ID.
- */
 
 
 
-
-/**
- * Generate tax report using FIFO method.
- * @param userId - User ID.
- */
-
-
+    /**
+     * Generate tax report using FIFO method.
+     * @param userId - User ID.
+     * @returns Tax report with taxable events in the format of an array of objects with the following properties:
+     * - `symbol`: Cryptocurrency symbol.
+     * - `amount`: Amount of cryptocurrency sold.
+     * - `sellPrice`: Price at which the cryptocurrency was sold.
+     * - `buyPrice`: Price at which the cryptocurrency was bought.
+     * - `profit`: Profit made from selling the cryptocurrency.
+     * - `date`: Date of the sale in ISO string format.
+     * @throws {Error} - If insufficient holdings of a cryptocurrency are found to sell the requested amount.
+     */
+    
+    /**
+     * Generate tax report using FIFO method.
+     * @param userId - User ID.
+     * @returns Tax report with taxable events in the format of an array of objects with the following properties:
+     * - `symbol`: Cryptocurrency symbol.
+     * - `amount`: Amount of cryptocurrency sold.
+     * - `sellPrice`: Price at which the cryptocurrency was sold.
+     * - `buyPrice`: Price at which the cryptocurrency was bought.
+     * - `profit`: Profit made from selling the cryptocurrency.
+     * - `date`: Date of the sale in ISO string format.
+     * @throws {Error} - If insufficient holdings of a cryptocurrency are found to sell the requested amount.
+     */
 export const generateTaxReport = async (userId: string) => {
     const user = await User.findById(userId);
     if (!user) throw new Error("User not found");
@@ -81,7 +95,6 @@ export const generateTaxReport = async (userId: string) => {
     if (!transactions || transactions.length === 0) {
         throw new Error("No transactions found for the user");
     }
-
     const taxableEvents: Array<{
         symbol: string;
         amount: number;

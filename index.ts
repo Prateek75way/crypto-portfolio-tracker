@@ -9,10 +9,18 @@ import { loadConfig } from "./app/common/helper/config.hepler";
 import { type IUser } from "./app/user/user.dto";
 import errorHandler from "./app/common/middleware/error-handler.middleware";
 import routes from "./app/routes";
-import "./app/user/background-job/background-job"
-loadConfig();
+import swaggerUi from 'swagger-ui-express';
+import fs from 'fs';
+import path from 'path';
+import "./app/user/background-job/background-job" 
 
-declare global {
+loadConfig();
+ 
+
+const swaggerJson = fs.readFileSync(path.join(process.cwd(), 'swagger', 'options.json'), 'utf-8');
+const swaggerSpec = JSON.parse(swaggerJson);
+
+declare global {  
   namespace Express {
     interface User extends Omit<IUser, "password"> { }
     interface Request {
@@ -38,6 +46,13 @@ const initApp = async (): Promise<void> => {
 
   // passport init
   //initPassport();
+
+  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); // Pass swaggerSpec instead of null
+  
+  
+  // Static file serving for the JSON file
+  app.use('/swagger', express.static(path.join(process.cwd(), 'swagger')));
+  const swaggerJsonPath = path.join(process.cwd(), 'swagger', 'options.json');
 
   // set base path to /api
   app.use("/api", routes);

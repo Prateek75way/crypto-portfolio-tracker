@@ -8,9 +8,10 @@ let priceCache: Record<string, any> = {};
 
 /**
  * Fetch cryptocurrency prices from CoinGecko API.
- * @param symbols Array of cryptocurrency symbols (e.g., ['bitcoin', 'ethereum']).
- * @param currency The target fiat currency (e.g., 'usd').
- * @returns The fetched price data.
+ * @param {string[]} symbols - Array of cryptocurrency symbols (e.g., ['bitcoin', 'ethereum']).
+ * @param {string} [currency='usd'] - The target fiat currency (e.g., 'usd').
+ * @returns {Promise<any>} - The fetched price data from CoinGecko API.
+ * @throws {Error} - Throws an error if unable to fetch prices.
  */
 export const fetchCryptoPrices = async (symbols: string[], currency: string = "usd") => {
     try {
@@ -29,7 +30,7 @@ export const fetchCryptoPrices = async (symbols: string[], currency: string = "u
 
 /**
  * Get the cached cryptocurrency prices.
- * @returns Cached price data.
+ * @returns {Record<string, any>} - Cached price data.
  */
 export const getCachedPrices = () => {
     return priceCache;
@@ -37,7 +38,8 @@ export const getCachedPrices = () => {
 
 /**
  * Start periodic price polling to update the cache.
- * @param interval Polling interval in milliseconds (default: 1 minute).
+ * @param {number} [interval=60000] - Polling interval in milliseconds (default: 1 minute).
+ * @returns {void} - This function has no return value.
  */
 export const startPricePolling = (interval: number = 60000) => {
     setInterval(async () => {
@@ -50,11 +52,11 @@ export const startPricePolling = (interval: number = 60000) => {
     }, interval);
 };
 
-
 /**
- * Calculate the user's profit and loss.
- * @param userId The ID of the user.
- * @returns An object containing P&L data.
+ * Calculate the user's profit and loss based on transactions.
+ * @param {string} userId - The ID of the user.
+ * @returns {Promise<{currentValue: number, costBasis: number, profitOrLoss: number}>} - An object containing the user's P&L data.
+ * @throws {Error} - Throws an error if the user does not have any transactions.
  */
 export const calculateProfitAndLoss = async (userId: string) => {
     // Fetch user's transactions
@@ -104,8 +106,22 @@ export const calculateProfitAndLoss = async (userId: string) => {
     return { currentValue, costBasis, profitOrLoss };
 };
 
+/**
+ * Create a new transaction (BUY, SELL, or TRANSFER).
+ * @param {string} userId - The ID of the user.
+ * @param {Object} transactionData - The data for the transaction.
+ * @param {string} transactionData.symbol - The symbol of the cryptocurrency (e.g., 'bitcoin').
+ * @param {string} transactionData.type - The type of transaction ('BUY' or 'SELL').
+ * @param {number} transactionData.amount - The amount of cryptocurrency.
+ * @returns {Promise<any>} - The created transaction object.
+ * @throws {Error} - Throws an error if required fields are missing or the price is unavailable.
+ */
 export const createTransaction = async (userId: string, transactionData: any) => {
     const { symbol, type, amount } = transactionData;
+
+    if (!symbol || !type || !amount) {
+        throw new Error("Missing required fields (symbol, type, amount)");
+    }
 
     // Fetch the real-time price from CoinGecko API
     let price;
@@ -122,13 +138,15 @@ export const createTransaction = async (userId: string, transactionData: any) =>
             throw new Error(`Price not available for symbol ${symbol}`);
         }
         price = data[symbol].usd; // Set the price from the API response
-        price = price*amount
+        price = price * amount;
     } catch (error: any) {
         throw new Error(`Error fetching price from CoinGecko: ${error.message}`);
     }
 
     // Save the transaction
-    const transaction = await Transaction.create({ userId, symbol, type, amount, price, date: new Date() });
+    const transaction = await Transaction.create({
+        userId, symbol, type, amount, price, date: new Date(),
+    });
 
     // Update the user's portfolio
     const user = await userSchema.findById(userId);
@@ -164,16 +182,21 @@ export const createTransaction = async (userId: string, transactionData: any) =>
         user.transactionCount = 0; // Initialize it if it's undefined
     }
 
-    // Update transaction count
     user.transactionCount += 1;
-
     await user.save();
+
     return transaction;
 };
 
-
-
-
+/**
+ * Transfer cryptocurrency between two users.
+ * @param {string} senderId - The ID of the sender.
+ * @param {string} receiverId - The ID of the receiver.
+ * @param {string} symbol - The symbol of the cryptocurrency (e.g., 'bitcoin').
+ * @param {number} amount - The amount of cryptocurrency to transfer.
+ * @returns {Promise<Object>} - The result of the transfer with portfolio updates.
+ * @throws {Error} - Throws an error if sender or receiver is not found, or if there are insufficient funds.
+ */
 export const transferCrypto = async (
     senderId: string,
     receiverId: string,
