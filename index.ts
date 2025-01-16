@@ -14,9 +14,10 @@ import fs from 'fs';
 import path from 'path';
 import "./app/user/background-job/background-job" 
 
+
 loadConfig();
  
-
+//swagger files config
 const swaggerJson = fs.readFileSync(path.join(process.cwd(), 'swagger', 'options.json'), 'utf-8');
 const swaggerSpec = JSON.parse(swaggerJson);
 
