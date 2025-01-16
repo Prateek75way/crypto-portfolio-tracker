@@ -3,12 +3,13 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const TransactionSchema = new Schema({
-    userId: { type: mongoose.Types.ObjectId, ref: "user", required: true },
+    senderId: { type: mongoose.Types.ObjectId, ref: "User", required: true },  // Sender of the transfer
+    receiverId: { type: mongoose.Types.ObjectId, ref: "User", required: true }, // Receiver of the transfer
     symbol: { type: String, required: true }, // Cryptocurrency symbol (e.g., 'bitcoin')
-    type: { type: String, enum: ["BUY", "SELL"], required: true },
+    type: { type: String, enum: ["BUY", "SELL", "TRANSFER"], required: true },  // Include TRANSFER type
     amount: { type: Number, required: true }, // Quantity of cryptocurrency
-    price: { type: Number, required: true }, // Price per unit at the time of transaction
-    date: { type: Date, default: Date.now },
+    price: { type: Number, required: true }, // Price per unit at the time of transaction (optional)
+    date: { type: Date, default: Date.now }, // Date of the transfer
 });
 
 export default mongoose.model("Transaction", TransactionSchema);

@@ -105,14 +105,34 @@ export const calculateProfitAndLoss = async (userId: string) => {
 };
 
 export const createTransaction = async (userId: string, transactionData: any) => {
-    const { symbol, type, amount, price } = transactionData;
+    const { symbol, type, amount } = transactionData;
+
+    // Fetch the real-time price from CoinGecko API
+    let price;
+    try {
+        const { data } = await axios.get(COINGECKO_API, {
+            params: {
+                ids: symbol, // Example: 'bitcoin'
+                vs_currencies: "usd", // Example: 'usd'
+            },
+        });
+
+        // Check if the price for the symbol is available
+        if (!data[symbol] || !data[symbol].usd) {
+            throw new Error(`Price not available for symbol ${symbol}`);
+        }
+        price = data[symbol].usd; // Set the price from the API response
+        price = price*amount
+    } catch (error: any) {
+        throw new Error(`Error fetching price from CoinGecko: ${error.message}`);
+    }
 
     // Save the transaction
     const transaction = await Transaction.create({ userId, symbol, type, amount, price, date: new Date() });
 
     // Update the user's portfolio
     const user = await userSchema.findById(userId);
-    if (!user) throw new Error("User  not found");
+    if (!user) throw new Error("User not found");
 
     // Ensure portfolio is defined
     if (!user.portfolio) {
@@ -140,7 +160,6 @@ export const createTransaction = async (userId: string, transactionData: any) =>
     }
 
     // Update transaction count
-    // Ensure transactionCount is defined
     if (user.transactionCount === undefined) {
         user.transactionCount = 0; // Initialize it if it's undefined
     }
@@ -151,3 +170,77 @@ export const createTransaction = async (userId: string, transactionData: any) =>
     await user.save();
     return transaction;
 };
+
+
+
+
+export const transferCrypto = async (
+    senderId: string,
+    receiverId: string,
+    symbol: string,
+    amount: number
+  ) => {
+    // Check if sender and receiver exist
+    const sender = await userSchema.findById(senderId);
+    const receiver = await userSchema.findById(receiverId);
+  
+    if (!sender) throw new Error("Sender not found");
+    if (!receiver) throw new Error("Receiver not found");
+  
+    // Fetch the current price of the cryptocurrency (e.g., Bitcoin)
+    let price;
+    try {
+      const { data } = await axios.get(COINGECKO_API, {
+        params: {
+          ids: symbol, // Example: 'bitcoin'
+          vs_currencies: "usd", // Example: 'usd'
+        },
+      });
+  
+      // Check if the price for the symbol is available
+      if (!data[symbol] || !data[symbol].usd) {
+        throw new Error(`Price not available for symbol ${symbol}`);
+      }
+      price = data[symbol].usd; // Get the price for the crypto symbol
+    } catch (error: any) {
+      throw new Error(`Error fetching price from CoinGecko: ${error.message}`);
+    }
+  
+    // Check if sender has enough balance
+    const senderPortfolio = sender.portfolio?.find((item) => item.symbol === symbol);
+    if (!senderPortfolio || senderPortfolio.amount < amount) {
+      throw new Error("Insufficient funds in sender's portfolio");
+    }
+  
+    // Update sender's portfolio (decrease amount)
+    senderPortfolio.amount -= amount;
+    await sender.save();
+  
+    // Update receiver's portfolio (increase amount)
+    const receiverPortfolio = receiver.portfolio?.find((item) => item.symbol === symbol);
+    if (receiverPortfolio) {
+      receiverPortfolio.amount += amount;
+    } else {
+      receiver.portfolio?.push({ symbol, amount });
+    }
+    await receiver.save();
+  
+    // Record the transaction with the current price
+    const transaction = new Transaction({
+      senderId: sender._id,
+      receiverId: receiver._id,
+      symbol,
+      type: "TRANSFER",
+      amount,
+      price,  // Include the current price of the crypto
+    });
+  
+    await transaction.save();
+  
+    return {
+      message: "Transfer successful",
+      senderPortfolio: senderPortfolio,
+      receiverPortfolio: receiverPortfolio,
+      transactionPrice: price,  // Optional: return the price at the time of transfer
+    };
+  };

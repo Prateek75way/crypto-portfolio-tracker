@@ -11,7 +11,8 @@ router
     // Route for fetching cached prices
     .get("/prices/cached", cryptoController.getCachedPrices)
     .get("/portfolio/pnl",authenticateUser, cryptoController.getProfitAndLoss)
-    .post("/transactions", authenticateUser, cryptoController.createTransaction);
+    .post("/transactions", authenticateUser, cryptoController.createTransaction)
+    .post("/transfer", authenticateUser, cryptoController.transferController);
 
 
 export default router;

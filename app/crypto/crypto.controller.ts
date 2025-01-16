@@ -52,12 +52,25 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
         throw new Error("User not authenticated");
     }
 
-    const { symbol, type, amount, price } = req.body;
+    const { symbol, type, amount } = req.body;
 
-    if (!symbol || !type || !amount || !price) {
-        throw new Error("All fields (symbol, type, amount, price) are required");
+    if (!symbol || !type || !amount) {
+        throw new Error("All fields (symbol, type, amount) are required");
     }
 
-    const transaction = await cryptoService.createTransaction(userId, { symbol, type, amount, price });
+    const transaction = await cryptoService.createTransaction(userId, { symbol, type, amount});
     res.status(201).send(createResponse(transaction, "Transaction created successfully"));
 });
+
+
+
+export const transferController = async (req: Request, res: Response) => {
+  const { senderId, receiverId, symbol, amount } = req.body;
+
+  try {
+    const result = await cryptoService.transferCrypto(senderId, receiverId, symbol, amount);
+    return res.status(200).json(result);
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+};
