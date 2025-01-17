@@ -1,7 +1,7 @@
 
 
 
-# Crypto Portfolio Tracker
+# Crypto Portfolio Tracker 
 
 A backend application for managing and tracking cryptocurrency portfolios. This application integrates with the CoinGecko API to fetch real-time cryptocurrency prices, calculate profit and loss (P&L) for a portfolio, and support various features such as transaction tracking, portfolio updates, and price alerts.
 
