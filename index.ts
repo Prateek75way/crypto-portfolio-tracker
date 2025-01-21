@@ -13,6 +13,7 @@ import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
 import path from 'path';
 import "./app/user/background-job/background-job" 
+import { rateLimiter } from "./app/common/middleware/reate-limitter.middleware";
 
 loadConfig();
  
@@ -36,6 +37,7 @@ const app: Express = express();
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(rateLimiter)
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser())

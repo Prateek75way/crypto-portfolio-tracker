@@ -1,6 +1,7 @@
 import express from "express";
 import * as cryptoController from "./crypto.controller";
 import { authenticateUser } from "../common/middleware/authenticate.middleware";
+import { rateLimiter } from "../common/middleware/reate-limitter.middleware";
 
 const router = express.Router();
 
@@ -11,8 +12,8 @@ router
     // Route for fetching cached prices
     .get("/prices/cached", cryptoController.getCachedPrices)
     .get("/portfolio/pnl",authenticateUser, cryptoController.getProfitAndLoss)
-    .post("/transactions", authenticateUser, cryptoController.createTransaction)
-    .post("/transfer", authenticateUser, cryptoController.transferController);
+    .post("/transactions", rateLimiter,authenticateUser, cryptoController.createTransaction)
+    .post("/transfer", rateLimiter, authenticateUser, cryptoController.transferController);
 
 
 export default router;
