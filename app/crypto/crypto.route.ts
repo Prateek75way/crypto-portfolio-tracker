@@ -1,7 +1,7 @@
 import express from "express";
 import * as cryptoController from "./crypto.controller";
 import { authenticateUser } from "../common/middleware/authenticate.middleware";
-import { rateLimiter } from "../common/middleware/reate-limitter.middleware";
+import { rateLimiter } from "../common/middleware/rate-limitter.middleware";
 
 const router = express.Router();
 

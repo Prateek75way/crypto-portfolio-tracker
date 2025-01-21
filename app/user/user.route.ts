@@ -4,7 +4,7 @@ import { catchError } from "../common/middleware/cath-error.middleware";
 import * as userController from "./user.controller";
 import * as userValidator from "./user.validation";
 import { authenticateUser } from "../common/middleware/authenticate.middleware";
-import { rateLimiter } from "../common/middleware/reate-limitter.middleware";
+import { rateLimiter } from "../common/middleware/rate-limitter.middleware";
 
 const router = Router();
 
