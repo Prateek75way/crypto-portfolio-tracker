@@ -108,7 +108,9 @@ export const generateTaxReport = async (userId: string) => {
 
     for (const tx of transactions) {
         const { type, symbol, amount, price, date } = tx;
-
+        if(!date){
+            throw new Error ("Date is missing")
+        }
         if (type === "BUY") {
             // Add to holdings
             if (!holdings[symbol]) holdings[symbol] = [];

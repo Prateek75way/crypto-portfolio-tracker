@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
+import { ITransaction } from "./crypto.dto";
 
 const Schema = mongoose.Schema;
 
-const TransactionSchema = new Schema({
+const TransactionSchema = new Schema<ITransaction>({
     senderId: { type: mongoose.Types.ObjectId, ref: "User"},  // Sender of the transfer
     receiverId: { type: mongoose.Types.ObjectId, ref: "User"}, // Receiver of the transfer
     symbol: { type: String, required: true }, // Cryptocurrency symbol (e.g., 'bitcoin')
