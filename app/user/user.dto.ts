@@ -7,6 +7,8 @@ export interface IUser extends BaseSchema {
     role: "USER" | "ADMIN";
     password: string;
     refreshToken?: string;
+    resetPasswordToken?: string;
+    resetPasswordExpires?: Date;
 
     // Optional fields for portfolio and user settings
     portfolio?: Array<{

@@ -15,7 +15,9 @@ router
         .post("/refresh", rateLimiter, userValidator.refreshToken, catchError, userController.refresh) 
         .post("/alerts",rateLimiter, authenticateUser, userController.addOrUpdateAlert)
         .get("/portfolio", authenticateUser, userController.getPortfolio)
-        .post("/logout", rateLimiter, authenticateUser, userController.logoutController);
+        .post("/logout", rateLimiter, authenticateUser, userController.logoutController)
+        .post("/forgot-password", userController.forgotPassword)
+        .post("/reset-password", userController.resetPassword);
         // .get("/", userController.getAllUser)
         // .get("/:id", userController.getUserById) 
         // .delete("/:id", userController.deleteUser)

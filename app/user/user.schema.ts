@@ -16,6 +16,8 @@ const UserSchema = new Schema<IUser>({
     role: { type: String, enum: ["USER", "ADMIN"], default: "USER" },
     password: { type: String, required: true },
     refreshToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 
     // Portfolio for tracking user holdings
     portfolio: [

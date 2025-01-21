@@ -5,6 +5,7 @@ import UserSchema from "./user.schema";
 import jwt from "jsonwebtoken";
 import axios from "axios";
 import bcrypt from "bcrypt";
+import { sendEmail } from "../common/helper/send-mail.helper";
 export const createUser = async (data: IUser) => {
     try {
         const result = await userSchema.create({...data, active: true});
@@ -250,6 +251,74 @@ export const clearRefreshToken = async (userId: string) => {
     } catch (error: any) {
         throw new Error(`Error clearing refresh token: ${error.message}`);
     }
+};
+
+
+/**
+ * Generate and send a password reset token using bcrypt.
+ * @param email - User's email address.
+ */
+export const sendResetToken = async (email: string): Promise<void> => {
+    const user = await userSchema.findOne({ email });
+
+    // Always respond with a generic message
+    if (!user) {
+        return; // Prevent revealing user existence
+    }
+
+    // Generate a random token (e.g., a UUID or simple string)
+    const resetToken = `${user._id}.${Date.now()}`;
+    const hashedToken = await bcrypt.hash(resetToken, 10); // Hash token with bcrypt
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // Convert to Date
+
+
+    try {
+        await user.save();
+
+        const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${encodeURIComponent(
+            resetToken
+        )}`;
+        await sendEmail({
+            to: email,
+            subject: "Password Reset Request",
+            text: `
+                <h3>Password Reset</h3>
+                <p>Click the link below to reset your password. This link will expire in 15 minutes:</p>
+                <a href="${resetURL}" target="_blank">${resetURL}</a>
+            `,
+        });
+    } catch (error) {
+        console.error("Failed to send reset token:", error);
+        throw new Error("Failed to send password reset email.");
+    }
+};
+
+/**
+ * Reset the user's password using the bcrypt-hashed token.
+ * @param token - Reset token.
+ * @param newPassword - New password.
+ */
+export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
+    const user = await userSchema.findOne({
+        resetPasswordExpires: { $gt: Date.now() }, // Ensure token is still valid
+    });
+
+    if (!user || !user.resetPasswordToken) {
+        throw new Error("Invalid or expired reset token.");
+    }
+
+    const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
+    if (!isTokenValid) {
+        throw new Error("Invalid or expired reset token.");
+    }
+
+    user.password = newPassword // set new password
+    user.resetPasswordToken = undefined; // Clear reset token
+    user.resetPasswordExpires = undefined;
+
+    await user.save();
 };
 
 
