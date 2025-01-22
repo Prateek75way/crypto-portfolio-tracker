@@ -100,19 +100,19 @@ export const createTransaction = asyncHandler(async (req: Request, res: Response
  * @throws {Error} - Throws an error if transfer fails
  * @returns {Response} - Returns transfer result
  */
-// export const transferCrypto = async (req: Request, res: Response) => {
-//     const { senderId, receiverId, symbol, amount } = req.body;
+export const transferCrypto = async (req: Request, res: Response) => {
+    const { senderId, receiverId, symbol, amount } = req.body;
 
-//     if (!senderId || !receiverId || !symbol || !amount) {
-//         return res.status(400).json({
-//             error: "All fields are required: senderId, receiverId, symbol, amount",
-//         });
-//     }
+    if (!senderId || !receiverId || !symbol || !amount) {
+        return res.status(400).json({
+            error: "All fields are required: senderId, receiverId, symbol, amount",
+        });
+    }
 
-//     try {
-//         const result = await cryptoService.transferCrypto(senderId, receiverId, symbol, amount);
-//         return res.status(200).json(result);
-//     } catch (error: any) {
-//         return res.status(400).json({ error: error.message });
-//     }
-// };
+    try {
+        const result = await cryptoService.transferCrypto(senderId, receiverId, symbol, amount);
+        return res.status(200).json(result);
+    } catch (error: any) { 
+        return res.status(400).json({ error: error.message });
+    }
+};

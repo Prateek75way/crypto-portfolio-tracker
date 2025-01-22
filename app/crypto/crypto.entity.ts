@@ -28,7 +28,7 @@ export class Transaction {
     @Column({ type: "varchar", length: 50, nullable: false })
     symbol?: string;
 
-    @Column({ type: "enum", enum: TransactionType, nullable: false })
+    @Column({ type: "enum", enum: TransactionType, nullable: false , default: TransactionType.TRANSFER})
     type?: TransactionType;
 
     @Column({ type: "decimal", precision: 10, scale: 2, nullable: false })

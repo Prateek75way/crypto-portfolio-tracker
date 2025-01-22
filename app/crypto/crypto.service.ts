@@ -237,73 +237,81 @@ export const createTransaction = async (userId: string, transactionData: any) =>
  * @returns {Promise<Object>} - The result of the transfer with portfolio updates.
  * @throws {Error} - Throws an error if sender or receiver is not found, or if there are insufficient funds.
  */
-// export const transferCrypto = async (
-//     senderId: string,
-//     receiverId: string,
-//     symbol: string,
-//     amount: number
-// ) => {
-//     const userRepository = getRepository(User);
-//     const transactionRepository = getRepository(Transaction);
 
-//     // Fetch sender and receiver
-//     const sender = await userRepository.findOne({ where: { id: senderId } });
-//     const receiver = await userRepository.findOne({ where: { id: receiverId } });
+export const transferCrypto = async (
+    senderId: string,
+    receiverId: string,
+    symbol: string,
+    amount: number
+) => {
+    const userRepository = getRepository(User);
+    const transactionRepository = getRepository(Transaction);
 
-//     if (!sender) throw new Error("Sender not found");
-//     if (!receiver) throw new Error("Receiver not found");
+    // Fetch sender and receiver
+    const sender = await userRepository.findOne({ where: { id: senderId } });
+    const receiver = await userRepository.findOne({ where: { id: receiverId } });
 
-//     // Fetch the current price of the cryptocurrency
-//     let price: number;
-//     try {
-//         const { data } = await axios.get(COINGECKO_API, {
-//             params: { ids: symbol, vs_currencies: "usd" },
-//         });
+    if (!sender) throw new Error("Sender not found");
+    if (!receiver) throw new Error("Receiver not found");
 
-//         if (!data[symbol] || !data[symbol].usd) {
-//             throw new Error(`Price not available for symbol ${symbol}`);
-//         }
+    // Fetch the current price of the cryptocurrency
+    let price: number;
+    try {
+        const { data } = await axios.get(COINGECKO_API, {
+            params: { ids: symbol, vs_currencies: "usd" },
+        });
 
-//         price = data[symbol].usd;
-//     } catch (error: any) {
-//         throw new Error(`Error fetching price from CoinGecko: ${error.message}`);
-//     }
+        if (!data[symbol] || !data[symbol].usd) {
+            throw new Error(`Price not available for symbol ${symbol}`);
+        }
 
-//     // Check sender's balance
-//     const senderPortfolio = sender.portfolio?.find((item: any) => item.symbol === symbol);
-//     if (!senderPortfolio || senderPortfolio.amount < amount) {
-//         throw new Error("Insufficient funds in sender's portfolio");
-//     }
+        price = data[symbol].usd;
+    } catch (error: any) {
+        throw new Error(`Error fetching price from CoinGecko: ${error.message}`);
+    }
 
-//     // Update sender's portfolio
-//     senderPortfolio.amount -= amount;
+    // Check sender's portfolio for the cryptocurrency
+    const senderPortfolio = sender.portfolio?.find((item: any) => item.symbol === symbol);
+    if (!senderPortfolio || senderPortfolio.amount < amount) {
+        throw new Error("Insufficient funds in sender's portfolio");
+    }
 
-//     // Update receiver's portfolio
-//     const receiverPortfolio = receiver.portfolio?.find((item: any) => item.symbol === symbol);
-//     if (receiverPortfolio) {
-//         receiverPortfolio.amount += amount;
-//     } else {
-//         if (!receiver.portfolio) receiver.portfolio = [];
-//         receiver.portfolio.push({ symbol, amount });
-//     }
+    // Sanitize the amount (parseFloat and ensure it's valid)
+    const transferAmount = parseFloat(amount.toString());
+    if (isNaN(transferAmount) || transferAmount <= 0) {
+        throw new Error("Invalid amount");
+    }
 
-//     // Save updated users
-//     await userRepository.save(sender);
-//     await userRepository.save(receiver);
+    // Update sender's portfolio
+    senderPortfolio.amount -= transferAmount;
 
-//     // Create and save the transaction
-//     const transaction = transactionRepository.create({
-//         senderId,
-//         receiverId,
-//         symbol,
-//         type: "TRANSFER",
-//         amount,
-//         price,
-//     });
-//     await transactionRepository.save(transaction);
+    // Check and update receiver's portfolio
+    let receiverPortfolio = receiver.portfolio?.find((item: any) => item.symbol === symbol);
+    if (receiverPortfolio) {
+        receiverPortfolio.amount += transferAmount;
+    } else {
+        // Initialize receiver's portfolio if it's not present
+        if (!receiver.portfolio) receiver.portfolio = [];
+        receiver.portfolio.push({ symbol, amount: transferAmount });
+    }
 
-//     return {
-//         message: "Transfer successful", 
-//         transaction,
-//     };
-// };
+    // Save updated users
+    await userRepository.save(sender);
+    await userRepository.save(receiver);
+
+    // Create and save the transaction
+    const transaction = transactionRepository.create({
+        sender,
+        receiver,
+        symbol,
+        
+        amount: transferAmount,
+        price,
+    });
+    await transactionRepository.save(transaction);
+
+    return {
+        message: "Transfer successful",
+        transaction,
+    };
+};

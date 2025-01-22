@@ -1,8 +1,8 @@
-import { Types } from "mongoose";
+
 
 export interface ITransaction {
-    senderId?: Types.ObjectId | string; // Sender's ID (optional for buy/sell)
-    receiverId?: Types.ObjectId | string; // Receiver's ID (optional for buy/sell)
+    senderId?: string; // Sender's ID (optional for buy/sell)
+    receiverId?: string; // Receiver's ID (optional for buy/sell)
     symbol: string; // Cryptocurrency symbol (e.g., 'bitcoin')
     type: "BUY" | "SELL" | "TRANSFER"; // Type of transaction
     amount: number; // Quantity of cryptocurrency
