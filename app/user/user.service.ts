@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import axios from "axios";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../common/helper/send-mail.helper";
-import { getRepository } from "typeorm";
+import { getRepository, IsNull, MoreThan, Not } from "typeorm";
 import { User } from "./user.entity";
 export const createUser  = async (data: IUser) => {
     const userRepository = getRepository(User);
@@ -250,14 +250,15 @@ export const getUserPortfolio = async (userId: string) => {
 export const clearRefreshToken = async (userId: string) => {
     try {
         // Find the user by ID
-        const user = await userSchema.findById(userId);
+        const userRepository = getRepository(User);
+        const user = await userRepository.findOne({ where: { id: userId } });
         if (!user) {
-            throw new Error("User not found");
+            throw new Error("User  not found");
         }
 
         // Set the refresh token to an empty string
         user.refreshToken = "";
-        await user.save();  // Save the updated user object
+        await userRepository.save(user);  // Save the updated user object
 
     } catch (error: any) {
         throw new Error(`Error clearing refresh token: ${error.message}`);
@@ -269,8 +270,9 @@ export const clearRefreshToken = async (userId: string) => {
  * Generate and send a password reset token using bcrypt.
  * @param email - User's email address.
  */
-export const sendResetToken = async (email: string): Promise<void> => {
-    const user = await userSchema.findOne({ email });
+export const sendResetToken = async (email: string) => {
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { email } });
 
     // Always respond with a generic message
     if (!user) {
@@ -278,19 +280,16 @@ export const sendResetToken = async (email: string): Promise<void> => {
     }
 
     // Generate a random token (e.g., a UUID or simple string)
-    const resetToken = `${user._id}.${Date.now()}`;
+    const resetToken = `${user.id}.${Date.now()}`;
     const hashedToken = await bcrypt.hash(resetToken, 10); // Hash token with bcrypt
 
     user.resetPasswordToken = hashedToken;
-    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // Convert to Date
-
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // Set expiration to 15 minutes
 
     try {
-        await user.save();
+        await userRepository.save(user); // Save the updated user object
 
-        const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${encodeURIComponent(
-            resetToken
-        )}`;
+        const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${encodeURIComponent(resetToken)}`;
         await sendEmail({
             to: email,
             subject: "Password Reset Request",
@@ -300,38 +299,46 @@ export const sendResetToken = async (email: string): Promise<void> => {
                 <a href="${resetURL}" target="_blank">${resetURL}</a>
             `,
         });
+
+        return resetURL;
     } catch (error) {
         console.error("Failed to send reset token:", error);
         throw new Error("Failed to send password reset email.");
     }
 };
-
 /**
  * Reset the user's password using the bcrypt-hashed token.
  * @param token - Reset token.
  * @param newPassword - New password.
  */
 export const resetPassword = async (token: string, newPassword: string): Promise<void> => {
-    const user = await userSchema.findOne({
-        resetPasswordExpires: { $gt: Date.now() }, // Ensure token is still valid
+    const userRepository = getRepository(User);
+    
+    // Find the user with a valid reset token and expiration
+    const user = await userRepository.findOne({
+        where: {
+            resetPasswordToken: Not(IsNull()), // Ensure the reset token exists
+            resetPasswordExpires: MoreThan(new Date()), // Ensure token is still valid
+        },
     });
 
-    if (!user || !user.resetPasswordToken) {
+    if (!user) {
         throw new Error("Invalid or expired reset token.");
     }
 
-    const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken);
+    // Validate the token
+    const isTokenValid = await bcrypt.compare(token, user.resetPasswordToken as string);
     if (!isTokenValid) {
         throw new Error("Invalid or expired reset token.");
     }
 
-    user.password = newPassword // set new password
+    // Set new password
+    user.password = newPassword // Hash the new password
     user.resetPasswordToken = undefined; // Clear reset token
-    user.resetPasswordExpires = undefined;
+    user.resetPasswordExpires = undefined; // Clear expiration
 
-    await user.save();
+    await userRepository.save(user); // Save the updated user object
 };
-
 
 // export const updateUser = async (id: string, data: IUser) => {
 //     const result = await UserSchema.findOneAndUpdate({ _id: id }, data, {

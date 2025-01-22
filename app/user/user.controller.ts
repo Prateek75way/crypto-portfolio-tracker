@@ -147,7 +147,7 @@ export const logoutController = asyncHandler(async (req: Request, res: Response)
     const userId = req.user?._id;  // Assuming user is attached to the request after authentication
 
     if (!userId) {
-        throw new Error("User not authenticated");
+        throw new Error("User  not authenticated");
     }
 
     try {
@@ -166,53 +166,54 @@ export const logoutController = asyncHandler(async (req: Request, res: Response)
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }
-});
+}); 
 
 
 /**
  * Handle forgot password request and send reset token.
  */
-export const forgotPassword = async (req: Request, res: Response) => {
+export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new Error("Email is required");
+    }
+    
     try {
-        const { email } = req.body;
-        if (!email) {
-            return res.status(400).json({ message: "Email is required." });
-        }
 
-        await userService.sendResetToken(email);
-        return res.status(200).json({
-            message: "Password reset link has been sent to your email.",
+      const token =   await userService.sendResetToken(email);
+         res.status(200).json({
+            message: `Password reset link has been sent to your email.`, data: token
         });
     } catch (error: any) {
         console.error("Forgot Password Error:", error);
-        return res.status(500).json({
+         res.status(500).json({
             message: error.message || "Something went wrong. Please try again later.",
         });
     }
-};
+});
 
 /**
  * Handle reset password request.
  */
-export const resetPassword = async (req: Request, res: Response) => {
+export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+         res.status(400).json({ message: "Token and new password are required." });
+    }
+
     try {
-        const { token, newPassword } = req.body;
-
-        if (!token || !newPassword) {
-            return res.status(400).json({ message: "Token and new password are required." });
-        }
-
         await userService.resetPassword(token, newPassword);
-        return res.status(200).json({
+         res.status(200).json({
             message: "Password has been reset successfully.",
         });
     } catch (error: any) {
         console.error("Reset Password Error:", error);
-        return res.status(500).json({
+         res.status(500).json({
             message: error.message || "Something went wrong. Please try again later.",
         });
     }
-};
+});
 
 
 // export const updateUser = asyncHandler(async (req: Request, res: Response) => {
