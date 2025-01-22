@@ -17,11 +17,8 @@ import userSchema from "./user.schema";
  * @returns Response with either user or error message
  */
 export const createUser = asyncHandler(async (req: Request, res: Response) => {
-    
-        const result = await userService.createUser(req.body);
-        res.status(201).send(createResponse(result, "User created successfully"));
-     
-        
+    const result = await userService.createUser(req.body);
+    res.status(201).send(createResponse(result, "User  created successfully"));
 });
 
   
@@ -33,23 +30,15 @@ export const createUser = asyncHandler(async (req: Request, res: Response) => {
  * @returns {Object} 404 - Error response when no users are found
  * @returns {Object} 500 - Internal server error response
  */
-export const getAllUsers = async (req: Request, res: Response) => {
-    try {
-      const result = await userService.getAllUsers();
-  
-      if (result.success) {
-        return res.status(200).json(result);
-      } else {
-        return res.status(404).json(result);
-      }
-    } catch (error: any) {
-      return res.status(500).json({
-        success: false,
-        message: "An error occurred while fetching users",
-        error: error.message,
-      });
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+    const result = await userService.getAllUsers();
+
+    if (result.success) {
+        res.status(200).json(result);
+    } else {
+        res.status(404).json(result);
     }
-};
+});
 
 
 /**
@@ -65,18 +54,16 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const loginUser = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    
-        const result = await userService.loginUser(email, password);
+    const result = await userService.loginUser (email, password);
 
-        // Set the access token as an HTTP-only cookie
-        res.cookie("AccessToken", result.accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Only for HTTPS in production
-            maxAge: 15 * 60 * 1000, // 15 minutes
-        });
+    // Set the access token as an HTTP-only cookie
+    res.cookie("AccessToken", result.accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Only for HTTPS in production
+        maxAge: 15 * 60 * 1000, // 15 minutes
+    });
 
-        res.status(200).send(createResponse(result, "Login successful"));
-    
+    res.status(200).send(createResponse(result, "Login successful"));
 });
 
 /**
@@ -91,25 +78,21 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
     const { refreshToken } = req.body;
 
-    try {
-        const { accessToken, refreshToken: newRefreshToken } = await userService.refreshTokens(refreshToken);
+    const { accessToken, refreshToken: newRefreshToken } = await userService.refreshTokens(refreshToken);
 
-        // Set the new access token as an HTTP-only cookie
-        res.cookie("AccessToken", accessToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production", // Use HTTPS in production
-            maxAge: 15 * 60 * 1000, // 15 minutes
-        });
+    // Set the new access token as an HTTP-only cookie
+    res.cookie("AccessToken", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+        maxAge: 15 * 60 * 1000, // 15 minutes
+    });
 
-        res.status(200).send(
-            createResponse(
-                { accessToken, refreshToken: newRefreshToken },
-                "Tokens refreshed successfully"
-            )
-        );
-    } catch (error: any) {
-        throw new Error(error.message);
-    }
+    res.status(200).send(
+        createResponse(
+            { accessToken, refreshToken: newRefreshToken },
+            "Tokens refreshed successfully"
+        )
+    );
 });
 
 /**
@@ -124,7 +107,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
  */
 export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?._id; // Assume user is authenticated
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) throw new Error("User  not authenticated");
 
     const { symbol, threshold } = req.body;
     if (!symbol || typeof threshold !== "number") {

@@ -15,7 +15,11 @@ import path from 'path';
 import "./app/user/background-job/background-job" 
 import { rateLimiter } from "./app/common/middleware/rate-limitter.middleware";
 
-
+import "reflect-metadata"
+import { AppDataSource } from "./app/common/services/postgresDB.service";
+import { createConnection } from "typeorm";
+import { User } from "./app/user/user.entity";
+import { Transaction } from "./app/crypto/crypto.entity";
 loadConfig();
  
 //swagger files config
@@ -45,8 +49,26 @@ app.use(cookieParser())
 
 const initApp = async (): Promise<void> => {
   // init mongodb
-  await initDB();
+  // await initDB();
+  //  AppDataSource.initialize().then(()=>console.log("db connected")).catch((err)=>console.log(err));
+  try {
+    await createConnection({
+        type: "postgres",
+        host: "localhost", // Your database host
+        port: 5432, // Your database port
+        username: "postgres", // Your database username
+        password: "1234", // Your database password
+        database: "crypto-tracker", // Your database name
+        entities: [User, Transaction ], // Add your entities here
+        synchronize: true, // Set to false in production
+    });
 
+    console.log("Database connection established successfully.");
+
+    // Start your Express server here
+} catch (error) {
+    console.error("Error connecting to the database:", error);
+}
   // passport init
   //initPassport();
 

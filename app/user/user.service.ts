@@ -6,13 +6,17 @@ import jwt from "jsonwebtoken";
 import axios from "axios";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../common/helper/send-mail.helper";
-export const createUser = async (data: IUser) => {
+import { getRepository } from "typeorm";
+import { User } from "./user.entity";
+export const createUser  = async (data: IUser) => {
+    const userRepository = getRepository(User);
+    
     try {
-        const result = await userSchema.create({...data, active: true});
+        const user = userRepository.create({ ...data, active: true });
+        const result = await userRepository.save(user);
         return result;
     } catch (error: any) {
-        if (error.code === 11000) {
-            // Handle duplicate key error (e.g., duplicate email)
+        if (error.code === "23505") { // PostgreSQL unique violation error code
             throw new Error("Email already exists");
         }
         throw new Error(error.message || "An error occurred while creating the user");
@@ -25,19 +29,20 @@ export const createUser = async (data: IUser) => {
  */
 export const getAllUsers = async () => {
     try {
-      // Fetch all users from the database
-      const users = await userSchema.find();
-  
-      // If no users found, return a message
-      if (users.length === 0) {
-        return { success: false, message: "No users found" };
-      }
-  
-      return { success: true, data: users };
+        // Fetch all users from the database
+        const userRepository = getRepository(User);
+        const users = await userRepository.find();
+
+        // If no users found, return a message
+        if (users.length === 0) {
+            return { success: false, message: "No users found" };
+        }
+
+        return { success: true, data: users };
     } catch (error: any) {
-      throw new Error("Failed to retrieve users: " + error.message);
+        throw new Error("Failed to retrieve users: " + error.message);
     }
-  };
+};
 
 /**
  * @description Logs in a user by verifying email and password, and returns access and refresh tokens
@@ -46,15 +51,16 @@ export const getAllUsers = async () => {
  * @returns {Object} - Returns access token and refresh token
  * @throws {Error} - Throws error if the email/password is invalid or user is not found
  */
-export const loginUser = async (email: string, password: string) => {
+export const loginUser  = async (email: string, password: string) => {
     if (!email || !password) {
         throw new Error("Email and password are required");
     }
 
     // Find the user by email
-    const user = await userSchema.findOne({ email });
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { email } });
     if (!user) {
-        throw new Error("User not found");
+        throw new Error("User  not found");
     }
 
     // Validate password
@@ -64,13 +70,13 @@ export const loginUser = async (email: string, password: string) => {
     }
 
     // Generate tokens
-    const accessToken = generateAccessToken(user._id, user.role);
-    const refreshToken = generateRefreshToken(user._id, user.role);
+    const accessToken = generateAccessToken(user.id as string, user.role as string);
+    const refreshToken = generateRefreshToken(user.id as string, user.role as string);
 
     // Save the refresh token to the database
     user.refreshToken = refreshToken;
     user.active = true;
-    await user.save();
+    await userRepository.save(user);
 
     return { accessToken, refreshToken };
 };
@@ -113,18 +119,19 @@ export const refreshTokens = async (refreshToken: string) => {
         };
 
         // Find the user by ID and verify the refresh token
-        const user = await userSchema.findOne({ _id: decoded.id, refreshToken });
+        const userRepository = getRepository(User);
+        const user = await userRepository.findOne({ where: { id: decoded.id, refreshToken } });
         if (!user) {
             throw new Error("Invalid or expired refresh token");
         }
 
         // Generate new tokens
-        const newAccessToken = generateAccessToken(user._id, user.role);
-        const newRefreshToken = generateRefreshToken(user._id, user.role);
+        const newAccessToken = generateAccessToken(user.id as string, user.role as string);
+        const newRefreshToken = generateRefreshToken(user.id as string, user.role as string);
 
         // Update the refresh token in the database (rotate token)
         user.refreshToken = newRefreshToken;
-        await user.save();
+        await userRepository.save(user);
 
         // Return the new tokens
         return { accessToken: newAccessToken, refreshToken: newRefreshToken };
@@ -133,7 +140,6 @@ export const refreshTokens = async (refreshToken: string) => {
         throw new Error("Invalid or expired refresh token");
     }
 };
-
 /**
  * @description Adds or updates an alert for a user's cryptocurrency portfolio
  * @param {string} userId - The ID of the user
@@ -143,7 +149,9 @@ export const refreshTokens = async (refreshToken: string) => {
  * @throws {Error} - Throws error if the user is not found or alerts are disabled
  */
 export const addOrUpdateAlert = async (userId: string, symbol: string, threshold: number) => {
-    const user = await userSchema.findById(userId);
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { id: userId } });
+    
     if (!user) throw new Error("User  not found");
 
     // Ensure alertPreferences is defined
@@ -174,10 +182,9 @@ export const addOrUpdateAlert = async (userId: string, symbol: string, threshold
         user.alertPreferences.priceThresholds.push({ symbol, threshold });
     }
 
-    await user.save();
+    await userRepository.save(user);
     return user.alertPreferences.priceThresholds;
 };
-
 /**
  * @description Retrieves the user's cryptocurrency portfolio with current prices
  * @param {string} userId - The ID of the user

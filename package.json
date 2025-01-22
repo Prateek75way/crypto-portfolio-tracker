@@ -30,6 +30,7 @@
     "@types/http-errors": "^2.0.4",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/morgan": "^1.9.4",
+    "@types/node": "^22.10.7",
     "@types/nodemailer": "^6.4.8",
     "@types/passport": "^1.0.12",
     "@types/passport-jwt": "^3.0.9",
@@ -69,6 +70,9 @@
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "swagger-ui-express": "^5.0.1"
+    "pg": "^8.13.1",
+    "reflect-metadata": "^0.2.2",
+    "swagger-ui-express": "^5.0.1",
+    "typeorm": "^0.3.20"
   }
 }

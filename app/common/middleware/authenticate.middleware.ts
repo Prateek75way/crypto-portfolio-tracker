@@ -1,13 +1,14 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-import User from "../../user/user.schema";
-import { IUser } from "../../user/user.dto";
+import { getRepository } from "typeorm";
+import { User } from "../../user/user.entity"; // Adjust the import path as necessary
+import { IUser } from "../../user/user.dto"; // Adjust the import path as necessary
 
 /**
  * Extends the Express Request object to include a user property.
  */
 export interface AuthenticatedRequest extends Request {
-    user?: Omit<IUser, "password">; // Exclude the password field from the user object
+    user?: Omit<IUser , "password">; // Exclude the password field from the user object
 }
 
 /**
@@ -18,7 +19,7 @@ export interface AuthenticatedRequest extends Request {
  * @param {NextFunction} next - The next middleware function in the stack.
  * @returns {void}
  */
-export const authenticateUser = async (
+export const authenticateUser  = async (
     req: AuthenticatedRequest,
     res: Response,
     next: NextFunction
@@ -28,36 +29,37 @@ export const authenticateUser = async (
         const token = req.cookies.AccessToken; // Use the correct cookie name
         if (!token) {
             // If no token is provided, respond with 401 Unauthorized
-            throw new Error("Authorization token is required");
+            throw new Error("authorization token is required");
         }
 
         // Verify the JWT using the secret key
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { 
             id: string;
             role: string;
         };
 
         // Look for the user associated with the decoded token's ID in the database
-        const user = await User.findById(decoded.id);
+        const userRepository = getRepository(User);
+        const user = await userRepository.findOne({ where: { id: decoded.id } });
         if (!user) {
             // If the user is not found, respond with 404 Not Found
-            throw new Error("User not found")
+            throw new Error("User not found");
         }
 
         // Attach user details to the request object, excluding the password field
         req.user = {
-            _id: user._id.toString(),
-            role: user.role,
-            name: user.name, // Include name
-            email: user.email, // Include email
-            createdAt: user.createdAt, // Include createdAt timestamp
-            updatedAt: user.updatedAt // Include updatedAt timestamp
+            _id: user.id as string, // Use 'id' instead of '_id' for TypeORM
+            role: user.role as string as "USER" | "ADMIN",
+            name: user.name as string, // Include name
+            email: user.email as string, // Include email
+            createdAt: user.createdAt ? user.createdAt.toISOString(): "", // Convert to string or set to null
+            updatedAt: user.updatedAt ? user.updatedAt.toISOString(): "" // Convert to string or set to null
         };
 
         // Proceed to the next middleware or route handler
         next();
     } catch (error: any) {
         // Handle errors and respond with a generic server error message
-        throw new Error(error.message || "Failed to authenticate user");
+        throw new Error(error.message || "An error occurred while authenticating the user");
     }
 };
