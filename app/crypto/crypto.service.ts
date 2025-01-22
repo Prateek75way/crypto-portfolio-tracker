@@ -13,6 +13,10 @@ let priceCache: Record<string, any> = {};
  * @returns {Promise<any>} - The fetched price data from CoinGecko API.
  * @throws {Error} - Throws an error if unable to fetch prices.
  */
+
+
+
+
 export const fetchCryptoPrices = async (symbols: string[], currency: string = "usd") => {
     try {
         const params = {
@@ -20,13 +24,13 @@ export const fetchCryptoPrices = async (symbols: string[], currency: string = "u
             vs_currencies: currency,
         };
         const { data } = await axios.get(COINGECKO_API, { params });
-        priceCache = data; // Update the cache with the latest data
-        return data;
+        return data; // Return the fetched data
     } catch (error: any) {
         console.error("Error fetching crypto prices:", error.message);
         throw new Error("Unable to fetch prices");
     }
 };
+
 
 /**
  * Get the cached cryptocurrency prices.

@@ -15,14 +15,22 @@ export const fetchPrices = asyncHandler(async (req: Request, res: Response) => {
     const { symbols, currency } = req.query;
 
     if (!symbols || typeof symbols !== "string") {
-        throw new Error("Query parameter 'symbols' is required and must be a comma-separated string.");
+         res.status(400).json({ message: "Query parameter 'symbols' is required and must be a comma-separated string." });
     }
-
-    const symbolList = symbols.split(",");
+    
+    const symbolList = (symbols?.toString())?.split(",");
     const fiatCurrency = (currency as string) || "usd";
 
-    const prices = await cryptoService.fetchCryptoPrices(symbolList, fiatCurrency);
-    res.status(200).send(createResponse(prices, "Fetched live prices successfully"));
+    try {
+        if (!symbolList) {
+            throw new Error("symbolList must be defined");
+        }
+        const prices = await cryptoService.fetchCryptoPrices(symbolList, fiatCurrency);
+         res.status(200).send(createResponse(prices, "Fetched live prices successfully"));
+    } catch (error: any) {
+        console.error("Error fetching prices:", error.message);
+         res.status(500).json({ message: error.message || "Unable to fetch prices" });
+    }
 });
 
 /**
