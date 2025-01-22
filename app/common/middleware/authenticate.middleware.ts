@@ -60,6 +60,6 @@ export const authenticateUser  = async (
         next();
     } catch (error: any) {
         // Handle errors and respond with a generic server error message
-        throw new Error(error.message || "An error occurred while authenticating the user");
+        throw new Error(error.message || "An error occurred while authenticating the user"); 
     }
 };

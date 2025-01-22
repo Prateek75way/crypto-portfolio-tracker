@@ -13,7 +13,7 @@ router
     .get("/prices/cached", cryptoController.getCachedPrices)
     .get("/portfolio/pnl",authenticateUser, cryptoController.getProfitAndLoss)
     .post("/transactions", rateLimiter,authenticateUser, cryptoController.createTransaction)
-    .post("/transfer", rateLimiter, authenticateUser, cryptoController.transferController);
+    // .post("/transfer", rateLimiter, authenticateUser, cryptoController.transferCrypto);
 
 
 export default router;

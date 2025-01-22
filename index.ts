@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import morgan from "morgan";
 import http from "http";
 import cookieParser from "cookie-parser";
-import { initDB } from "./app/common/services/database.service";
+
 import { initPassport } from "./app/common/services/passport-jwt.service";
 import { loadConfig } from "./app/common/helper/config.hepler";
 import { type IUser } from "./app/user/user.dto";
@@ -69,6 +69,9 @@ const initApp = async (): Promise<void> => {
 } catch (error) {
     console.error("Error connecting to the database:", error);
 }
+
+
+
   // passport init
   //initPassport();
 
