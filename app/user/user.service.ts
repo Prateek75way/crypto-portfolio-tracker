@@ -191,10 +191,14 @@ export const addOrUpdateAlert = async (userId: string, symbol: string, threshold
  * @returns {Object} - Returns the user's portfolio with details and current prices
  * @throws {Error} - Throws error if the user is not found
  */
+
+
 export const getUserPortfolio = async (userId: string) => {
-    const user = await userSchema.findById(userId);
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ where: { id: userId } });
+    
     if (!user) {
-        throw new Error("User not found");
+        throw new Error("User  not found");
     }
 
     // If the user has no portfolio
@@ -203,7 +207,7 @@ export const getUserPortfolio = async (userId: string) => {
     }
 
     const portfolioDetails = await Promise.all(
-        user.portfolio.map(async (crypto: any) => {
+        user.portfolio.map(async (crypto: { symbol: string; amount: number }) => {
             try {
                 // Fetch current price using an API (e.g., CoinGecko)
                 const { data } = await axios.get(`https://api.coingecko.com/api/v3/simple/price`, {

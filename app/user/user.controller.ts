@@ -126,20 +126,15 @@ export const addOrUpdateAlert = asyncHandler(async (req: Request, res: Response)
  * @returns {Object} 401 - Error response if user is not authenticated
  * @returns {Object} 500 - Internal server error response
  */
-export const getPortfolio = async (req: Request, res: Response) => {
-    try {
-        const userId = req.user?._id;
-        if (!userId) {
-            throw new Error("User not authenticated");
-        }
-
-        const portfolio = await userService.getUserPortfolio(userId);
-        return res.status(200).send(createResponse(portfolio, "Fetched portfolio successfully"));
-    } catch (error: any) {
-        console.error("Error fetching portfolio:", error.message);
-        throw new Error("Failed to fetch portfolio");
+export const getPortfolio = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?._id; // Assume user is authenticated
+    if (!userId) {
+        throw new Error("User  not authenticated");
     }
-};
+
+    const portfolio = await userService.getUserPortfolio(userId);
+    res.status(200).send(createResponse(portfolio, "Fetched portfolio successfully"));
+});
 
 /**
  * @route POST /logout
