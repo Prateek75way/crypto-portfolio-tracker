@@ -1,0 +1,1163 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "User Management API",
+    "version": "1.0.0",
+    "description": "API documentation for the User Management service."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/users/": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get all users",
+        "description": "Fetch a list of all users. Requires ADMIN role.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of users",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "summary": "Success",
+                    "value": {
+                      "success": true,
+                      "data": [
+                        {
+                          "id": "1",
+                          "name": "John Doe",
+                          "email": "john.doe@example.com",
+                          "isBlocked": false
+                        },
+                        {
+                          "id": "2",
+                          "name": "Jane Smith",
+                          "email": "jane.smith@example.com",
+                          "isBlocked": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["User"],
+        "summary": "Create a new user",
+        "description": "Create a new user by providing the required details. This operation may require ADMIN privileges.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "john.doe@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  },
+                  "active": {
+                    "type": "string",
+                    "example": true,
+                    "description": "Active status of the user"
+                  }
+                },
+                "required": ["name", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "summary": "Success",
+                    "value": {
+                      "success": true,
+                      "message": "User created successfully",
+                      "data": {
+                        "id": "1",
+                        "name": "John Doe",
+                        "email": "john.doe@example.com",
+                        "role": "user"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    
+    "/users/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "User login",
+        "description": "Authenticates a user and returns a JWT token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "summary": "Success",
+                    "value": {
+                      "success": true,
+                      "message": "Login successful",
+                      "data": {
+                        "token": "jwt.token.here"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid login credentials",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_credentials": {
+                    "summary": "Invalid Credentials",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid email or password"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Unauthorized",
+                    "value": {
+                      "success": false,
+                      "message": "Unauthorized access"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/users/logout": {
+    "post": {
+      "tags": ["Auth"],
+      "summary": "Logout the user",
+      "description": "This endpoint logs the user out by clearing the access token from cookies and setting the refresh token to an empty string in the database.",
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User logged out successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Logout successful",
+                  "value": {
+                    "success": true,
+                    "message": "User logged out successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized, user is not authenticated"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+
+    "/users/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh token",
+        "description": "Generates a new access token using a valid refresh token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string",
+                    "example": "refresh.token.here"
+                  }
+                },
+                "required": ["refreshToken"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "summary": "Success",
+                    "value": {
+                      "success": true,
+                      "message": "Token refreshed successfully",
+                      "data": {
+                        "accessToken": "new.jwt.token.here"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid refresh token",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_token": {
+                    "summary": "Invalid Token",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid or expired refresh token"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Unauthorized",
+                    "value": {
+                      "success": false,
+                      "message": "Unauthorized access"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/users/alerts": {
+      "post": {
+        "tags": ["Alerts"],
+        "summary": "Add or update alert",
+        "description": "Adds a new alert or updates an existing alert for the authenticated user.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "example": "bitcoin",
+                    "description": "The symbol of the cryptocurrency (e.g., BTC, ETH)."
+                  },
+                  "threshold": {
+                    "type": "number",
+                    "example": 45000,
+                    "description": "The price at which the alert should trigger."
+                  }
+                  
+                },
+                "required": ["symbol", "priceThreshold", "alertType"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert added or updated successfully",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "summary": "Success",
+                    "value": {
+                      "success": true,
+                      "message": "Alert added or updated successfully",
+                      "data": {
+                        "id": "12345",
+                        "symbol": "BTC",
+                        "priceThreshold": 45000,
+                        "alertType": "above"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_body": {
+                    "summary": "Invalid Request",
+                    "value": {
+                      "success": false,
+                      "message": "Invalid request body"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "unauthorized": {
+                    "summary": "Unauthorized",
+                    "value": {
+                      "success": false,
+                      "message": "Unauthorized access"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    
+    "/users/portfolio": {
+        "get": {
+          "tags": ["Portfolio"],
+          "summary": "Get user portfolio",
+          "description": "Fetch the portfolio details of the authenticated user.",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Portfolio fetched successfully",
+              "content": {
+                "application/json": {
+                  "examples": {
+                    "success": {
+                      "summary": "Success",
+                      "value": {
+                        "success": true,
+                        "data": {
+                          "portfolio": [
+                            {
+                              "symbol": "BTC",
+                              "amount": 1.5,
+                              "currentValue": 45000
+                            },
+                            {
+                              "symbol": "ETH",
+                              "amount": 10,
+                              "currentValue": 3000
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "examples": {
+                    "unauthorized": {
+                      "summary": "Unauthorized",
+                      "value": {
+                        "success": false,
+                        "message": "Unauthorized access"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+    },
+
+    "/portfolio": {
+    "delete": {
+      "tags": ["Portfolio"],
+      "summary": "Delete cryptocurrency from portfolio",
+      "description": "Remove a specific cryptocurrency from the authenticated user's portfolio.",
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string",
+                  "example": "bitcoin",
+                  "description": "The symbol of the cryptocurrency to remove."
+                }
+              },
+              "required": ["symbol"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Cryptocurrency removed from portfolio successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Cryptocurrency removed from portfolio successfully",
+                    "data": {
+                      "symbol": "BTC"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid input data",
+          "content": {
+            "application/json": {
+              "examples": {
+                "invalidData": {
+                  "summary": "Invalid Data",
+                  "value": {
+                    "success": false,
+                    "message": "Invalid cryptocurrency symbol"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "examples": {
+                "unauthorized": {
+                  "summary": "Unauthorized",
+                  "value": {
+                    "success": false,
+                    "message": "Unauthorized access"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Cryptocurrency not found",
+          "content": {
+            "application/json": {
+              "examples": {
+                "notFound": {
+                  "summary": "Not Found",
+                  "value": {
+                    "success": false,
+                    "message": "Cryptocurrency not found in portfolio"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+    
+    "/portfolio/tax-report": {
+    "get": {
+      "tags": ["Portfolio"],
+      "summary": "Get tax report",
+      "description": "Retrieve a detailed tax report for the authenticated user's portfolio, including realized and unrealized gains.",
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Tax report retrieved successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Tax report generated successfully",
+                    "data": {
+                      "realizedGains": 1500.75,
+                      "unrealizedGains": 3200.50,
+                      "transactions": [
+                        {
+                          "symbol": "BTC",
+                          "type": "SELL",
+                          "amount": 0.1,
+                          "priceAtSale": 45000,
+                          "profit": 1000
+                        },
+                        {
+                          "symbol": "ETH",
+                          "type": "HOLD",
+                          "amount": 2,
+                          "currentPrice": 3000,
+                          "unrealizedProfit": 6000
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "examples": {
+                "unauthorized": {
+                  "summary": "Unauthorized",
+                  "value": {
+                    "success": false,
+                    "message": "Unauthorized access"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Tax report not found",
+          "content": {
+            "application/json": {
+              "examples": {
+                "notFound": {
+                  "summary": "Not Found",
+                  "value": {
+                    "success": false,
+                    "message": "No tax report available for the user"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "/crypto/prices": {
+    "get": {
+      "tags": ["Crypto"],
+      "summary": "Fetch latest crypto prices",
+      "description": "Fetch the latest cryptocurrency prices from an external API.",
+      "responses": {
+        "200": {
+          "description": "Prices fetched successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Latest prices fetched successfully",
+                    "data": [
+                      {
+                        "symbol": "BTC",
+                        "price": 45000
+                      },
+                      {
+                        "symbol": "ETH",
+                        "price": 3000
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Error fetching prices",
+          "content": {
+            "application/json": {
+              "examples": {
+                "error": {
+                  "summary": "Error",
+                  "value": {
+                    "success": false,
+                    "message": "Failed to fetch prices from the external API"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "/crypto/prices/cached": {
+    "get": {
+      "tags": ["Crypto"],
+      "summary": "Fetch cached crypto prices",
+      "description": "Retrieve the latest cached cryptocurrency prices.",
+      "responses": {
+        "200": {
+          "description": "Cached prices retrieved successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Cached prices retrieved successfully",
+                    "data": [
+                      {
+                        "symbol": "BTC",
+                        "price": 44800
+                      },
+                      {
+                        "symbol": "ETH",
+                        "price": 2950
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "No cached prices available",
+          "content": {
+            "application/json": {
+              "examples": {
+                "notFound": {
+                  "summary": "Not Found",
+                  "value": {
+                    "success": false,
+                    "message": "No cached prices found"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Error retrieving cached prices",
+          "content": {
+            "application/json": {
+              "examples": {
+                "error": {
+                  "summary": "Error",
+                  "value": {
+                    "success": false,
+                    "message": "Failed to retrieve cached prices"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "/crypto/portfolio/pnl": {
+    "get": {
+      "tags": ["Crypto"],
+      "summary": "Get Portfolio PnL (Profit and Loss)",
+      "description": "Fetch the profit and loss for the user's portfolio based on their crypto transactions.",
+      "responses": {
+        "200": {
+          "description": "Profit and Loss data retrieved successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Profit and Loss data retrieved successfully",
+                    "data": {
+                      "totalProfit": 5000,
+                      "totalLoss": 1500,
+                      "netProfit": 3500
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized"
+        },
+        "500": {
+          "description": "Error fetching PnL data",
+          "content": {
+            "application/json": {
+              "examples": {
+                "error": {
+                  "summary": "Error",
+                  "value": {
+                    "success": false,
+                    "message": "Failed to fetch Profit and Loss data"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "/crypto/transactions": {
+    "post": {
+      "tags": ["Crypto"],
+      "summary": "Create a new transaction",
+      "description": "Create a new transaction (buy/sell) for the user's portfolio.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "symbol": {
+                  "type": "string",
+                  "example": "bitcoin"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["BUY", "SELL"],
+                  "example": "BUY"
+                },
+                "amount": {
+                  "type": "number",
+                  "example": 1
+                }
+                
+              },
+              "required": ["symbol", "type", "amount"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Transaction created successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Transaction created successfully",
+                    "data": {
+                      "id": "12345",
+                      "symbol": "BTC",
+                      "type": "BUY",
+                      "amount": 0.5,
+                      "price": 45000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid input data"
+        },
+        "401": {
+          "description": "Unauthorized"
+        },
+        "500": {
+          "description": "Error creating transaction",
+          "content": {
+            "application/json": {
+              "examples": {
+                "error": {
+                  "summary": "Error",
+                  "value": {
+                    "success": false,
+                    "message": "Failed to create transaction"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "/crypto/transfer": {
+    "post": {
+      "tags": ["Crypto"],
+      "summary": "Transfer crypto between users",
+      "description": "Transfer crypto from one user to another in the platform.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "senderId": {
+                  "type": "string",
+                  "example": "605c5d5f4513e60015856c56"
+                },
+                "receiverId": {
+                  "type": "string",
+                  "example": "605c5d5f4513e60015856c57"
+                },
+                "symbol": {
+                  "type": "string",
+                  "example": "bitcoin"
+                },
+                "amount": {
+                  "type": "number",
+                  "example": 1
+                }
+              },
+              "required": ["senderId", "receiverId", "symbol", "amount"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Crypto transferred successfully",
+          "content": {
+            "application/json": {
+              "examples": {
+                "success": {
+                  "summary": "Success",
+                  "value": {
+                    "success": true,
+                    "message": "Crypto transferred successfully",
+                    "data": {
+                      "senderId": "605c5d5f4513e60015856c56",
+                      "receiverId": "605c5d5f4513e60015856c57",
+                      "symbol": "BTC",
+                      "amount": 0.25
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid transfer data"
+        },
+        "401": {
+          "description": "Unauthorized"
+        },
+        "500": {
+          "description": "Error processing transfer",
+          "content": {
+            "application/json": {
+              "examples": {
+                "error": {
+                  "summary": "Error",
+                  "value": {
+                    "success": false,
+                    "message": "Failed to process transfer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/forgot-password": {
+      "post": {
+        "summary": "Request a password reset link",
+        "description": "Sends a password reset link to the user's email address if the email is associated with an existing account.",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com",
+                    "description": "The email address associated with the user account."
+                  }
+                },
+                "required": ["email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset link sent successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password reset link has been sent to your email."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Email is required."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Something went wrong. Please try again later."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset-password": {
+      "post": {
+        "summary": "Reset user password",
+        "description": "Resets the user's password using a valid reset token.",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "example": "your-reset-token",
+                    "description": "The password reset token received via email."
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "newSecurePassword123!",
+                    "description": "The new password for the user."
+                  }
+                },
+                "required": ["token", "newPassword"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password has been reset successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Token and new password are required."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Something went wrong. Please try again later."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
