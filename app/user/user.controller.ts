@@ -78,7 +78,7 @@ export const loginUser = asyncHandler(async (req: Request, res: Response) => {
         res.status(200).send(createResponse(result, "Login successful"));
     
 });
-
+  
 /**
  * @route POST /refresh
  * @description Refresh the access token using a refresh token

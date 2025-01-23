@@ -72,7 +72,7 @@ export const loginUser = async (email: string, password: string) => {
     user.active = true;
     await user.save();
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, user };
 };
 
 /**
@@ -216,7 +216,7 @@ export const getUserPortfolio = async (userId: string) => {
                 };
             } catch (error: any) {
                 console.error(`Failed to fetch price for ${crypto.symbol}:`, error.message);
-                return {
+                return { 
                     symbol: crypto.symbol,
                     amount: crypto.amount,
                     currentPrice: 0,
@@ -230,7 +230,7 @@ export const getUserPortfolio = async (userId: string) => {
     return { portfolio: portfolioDetails };
 };
 
-/**
+/** 
  * @description Clears the refresh token in the database for a given user
  * @param {string} userId - The ID of the user
  * @returns {void} - Updates the user record to clear the refresh token
@@ -277,11 +277,11 @@ export const sendResetToken = async (email: string): Promise<void> => {
     try {
         await user.save();
 
-        const resetURL = `${process.env.CLIENT_URL}/reset-password?token=${encodeURIComponent(
+        const resetURL = `http://localhost:5173/reset-password?token=${encodeURIComponent(
             resetToken
         )}`;
         await sendEmail({
-            to: email,
+            to: email, 
             subject: "Password Reset Request",
             text: `
                 <h3>Password Reset</h3>

@@ -18,8 +18,8 @@ router
         .post("/logout", rateLimiter, authenticateUser, userController.logoutController)
         .post("/forgot-password", userController.forgotPassword)
         .post("/reset-password", userController.resetPassword);
-        // .get("/", userController.getAllUser)
-        // .get("/:id", userController.getUserById) 
+        // .get("/", userController.getAllUser)    
+        // .get("/:id", userController.getUserById)   
         // .delete("/:id", userController.deleteUser)
         // .put("/:id", userValidator.updateUser, catchError, userController.updateUser)
         // .patch("/:id", userValidator.editUser, catchError, userController.editUser)

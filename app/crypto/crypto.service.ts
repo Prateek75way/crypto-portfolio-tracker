@@ -62,13 +62,16 @@ export const calculateProfitAndLoss = async (userId: string) => {
     // Fetch user's transactions
     const transactions = await Transaction.find({ userId });
 
-    if (transactions.length === 0) {
+    console.log("Fetched Transactions:", transactions); // Debugging: Log fetched transactions
+
+    if (transactions.length === 0) { 
         return { currentValue: 0, costBasis: 0, profitOrLoss: 0 };
     }
 
     // Group transactions by cryptocurrency symbol
     const holdings: Record<string, { amount: number; costBasis: number }> = {};
     transactions.forEach((transaction: any) => {
+        console.log("Processing Transaction:", transaction); // Debugging: Log each transaction
         const { symbol, type, amount, price } = transaction;
 
         if (!holdings[symbol]) {
@@ -84,9 +87,13 @@ export const calculateProfitAndLoss = async (userId: string) => {
         }
     });
 
+    console.log("Holdings:", holdings); // Debugging: Log holdings after processing transactions
+
     // Fetch current prices for all held cryptocurrencies
     const symbols = Object.keys(holdings);
     const currentPrices = await fetchCryptoPrices(symbols);
+
+    console.log("Current Prices:", currentPrices); // Debugging: Log current prices fetched
 
     // Calculate current value and total cost basis
     let currentValue = 0;
@@ -96,12 +103,16 @@ export const calculateProfitAndLoss = async (userId: string) => {
         const holding = holdings[symbol];
         const currentPrice = currentPrices[symbol]?.usd || 0;
 
+        console.log(`Calculating for ${symbol}: Amount: ${holding.amount}, Current Price: ${currentPrice}`); // Debugging: Log calculation details
+
         currentValue += holding.amount * currentPrice;
         costBasis += holding.costBasis;
     });
 
     // Calculate profit or loss
     const profitOrLoss = currentValue - costBasis;
+
+    console.log("Current Value:", currentValue, "Cost Basis:", costBasis, "Profit/Loss:", profitOrLoss); // Debugging: Log final calculations
 
     return { currentValue, costBasis, profitOrLoss };
 };
@@ -198,9 +209,9 @@ export const createTransaction = async (userId: string, transactionData: any) =>
  * @throws {Error} - Throws an error if sender or receiver is not found, or if there are insufficient funds.
  */
 export const transferCrypto = async (
-    senderId: string,
+    senderId: string, 
     receiverId: string,
-    symbol: string,
+    symbol: string, 
     amount: number
   ) => {
     // Check if sender and receiver exist

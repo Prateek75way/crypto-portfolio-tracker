@@ -11,6 +11,7 @@ import errorHandler from "./app/common/middleware/error-handler.middleware";
 import routes from "./app/routes";
 import swaggerUi from 'swagger-ui-express';
 import fs from 'fs';
+import cors from 'cors';
 import path from 'path';
 import "./app/user/background-job/background-job" 
 import { rateLimiter } from "./app/common/middleware/rate-limitter.middleware";
@@ -42,6 +43,7 @@ app.use(rateLimiter)
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser())
+app.use(cors({origin : '*', credentials : true}));
 
 const initApp = async (): Promise<void> => {
   // init mongodb
@@ -74,4 +76,4 @@ const initApp = async (): Promise<void> => {
 };
 
 void initApp();
-  
+   

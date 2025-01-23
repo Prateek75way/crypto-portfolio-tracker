@@ -25,18 +25,18 @@ export const authenticateUser = async (
 ): Promise<void> => {
     try {
         // Retrieve the JWT from the cookies
-        const token = req.cookies.AccessToken; // Use the correct cookie name
+        const token = req.headers.authorization?.replace("Bearer ", ""); // Use the correct cookie name
         if (!token) {
             // If no token is provided, respond with 401 Unauthorized
             throw new Error("Authorization token is required");
         }
-
+ 
         // Verify the JWT using the secret key
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-            id: string;
-            role: string;
-        };
-
+            id: string; 
+            role: string; 
+        }; 
+ 
         // Look for the user associated with the decoded token's ID in the database
         const user = await User.findById(decoded.id);
         if (!user) {
@@ -60,4 +60,4 @@ export const authenticateUser = async (
         // Handle errors and respond with a generic server error message
         throw new Error(error.message || "Failed to authenticate user");
     }
-};
+}; 
